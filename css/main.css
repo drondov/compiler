@@ -1,0 +1,26 @@
+.text-editor {
+  padding: 10px;
+  width: 100%;
+  max-width: 500px;
+  height: 400px;
+  margin-right: 10px;
+}
+
+.constant-table {
+  max-width: 300px;
+}
+
+.ids-table {
+  max-width: 200px;
+}
+
+.lexems {
+  /*max-width: 300px;*/
+}
+
+.errors-message {
+  color: red;
+  padding: 25px;
+  margin: 5px 20px;
+  background: #f0f0f0;
+}
