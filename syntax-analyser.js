@@ -1,3 +1,10 @@
+function InnerError(message) {
+  this.constructor.prototype.__proto__ = Error.prototype;
+  Error.call(this);
+  Error.captureStackTrace(this, this.constructor);
+  this.name = this.constructor.name;
+  this.message = message;
+}
 
 export default class SyntaxAnalyser {
   constructor(tokens) {
@@ -40,6 +47,7 @@ export default class SyntaxAnalyser {
     const isValid = possibilities.some(fName => {
       try {
         this[fName](tokens);
+
         return true;
       } catch (e) {
         console.error(e);
@@ -114,20 +122,34 @@ export default class SyntaxAnalyser {
       return true;
     }
     if (tokens[0].text === '(') {
-      this.check(tokens[tokens.length - 1], ')');
-      return true;
+      this.check(')', tokens[tokens.length - 1]);
+      return this.isExpression(tokens.slice(1, -1));
     }
     if (tokens[0].text !== '(' && tokens[0].lexem.type !== 'ID' && tokens[0].lexem.type !== 'NUMBER') {
       this.error(tokens[0], 'should be id|number|(', true);
     }
     this.check({ type: 'operator' }, tokens[1]);
-    // TODO: Add check for right operand.
+
+    let rightOperand = [];
+    // if (tokens[2].text === '(') {
+    rightOperand = tokens.slice(2);
+    // } else {
+    //   let brackets = 0;
+    //   for (let i = 2; i < tokens.length; ++i) {
+    //     if (tokens[i].text === ')' && brackets === 0 && i > 2) break;
+    //     if (tokens[i].text === '(') brackets++;
+    //     if (tokens[i].text === ')') brackets++;
+    //     rightOperand.push(tokens[i]);
+    //   }
+    // }
+    console.log('right', rightOperand);
+    this.isExpression(rightOperand);
+
     return true;
   }
 
   check(rule, token) {
     console.log('check', rule);
-    // const token = this.tokens[this.i];
     if (typeof rule === 'string') {
       if (rule !== token.text) this.error(token, rule);
       return true;
@@ -136,7 +158,7 @@ export default class SyntaxAnalyser {
       if (rule.type !== token.lexem.type) this.error(token, 'a type of ' + rule.type);
       return true;
     }
-    throw new Error('Check is invalid');
+    throw new Error('Check is invalid rule: ' + rule + ', token: ' + JSON.stringify(token));
   }
 
 
