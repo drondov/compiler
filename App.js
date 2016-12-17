@@ -9,7 +9,7 @@ import Errors from './Errors';
 import Lexer from './lexer';
 
 const defaultProgram = `
-program sum100 begin
+program sum100 {
 	i := 0;
 	sum := 0;
 	while i < 100.999 do {
@@ -17,7 +17,7 @@ program sum100 begin
 		i := i + 1;
 	};
 	write(sum);
-end
+}
 `;
 
 export default class App extends React.Component {
@@ -37,7 +37,9 @@ export default class App extends React.Component {
 		try {
 			this.lexerData = lexer.lex();
 			const syntaxAnalyser = new SyntaxAnalyser(this.lexerData.tokens);
+			syntaxAnalyser.analyze();
 		} catch (e) {
+			console.error(e);
 			error = e.message;
 		}
 		console.log(this.lexerData)

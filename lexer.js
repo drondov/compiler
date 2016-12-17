@@ -2,8 +2,6 @@ export default class Lexer {
 	constructor(text) {
 		this.lexems = [
 			{ text: 'program', type: 'keyword' },
-			{ text: 'begin', type: 'keyword' },
-			{ text: 'end', type: 'keyword' },
 			{ text: 'while', type: 'keyword' },
 			{ text: 'do', type: 'keyword' },
 			{ text: 'if', type: 'keyword' },
@@ -12,8 +10,8 @@ export default class Lexer {
 			{ text: '{', type: 'keyword' },
 			{ text: '(', type: 'operator' },
 			{ text: ')', type: 'operator' },
-			{ text: ':=', type: 'operator' },
-			{ text: '==', type: 'operator' },
+			{ text: ':=', type: 'statement' },
+			{ text: '=', type: 'operator' },
 			{ text: '*', type: 'operator' },
 			{ text: '/', type: 'operator' },
 			{ text: '+', type: 'operator' },
@@ -21,8 +19,8 @@ export default class Lexer {
 			{ text: '<', type: 'operator' },
 			{ text: '>', type: 'operator' },
 			{ text: ';', type: 'delimeter' },
-			{ text: 'read', type: 'operator' },
-			{ text: 'write', type: 'operator' },
+			{ text: 'read', type: 'statement' },
+			{ text: 'write', type: 'statement' },
 			{ type: 'ID' },
 			{ type: 'NUMBER' },
 		];
@@ -48,111 +46,205 @@ export default class Lexer {
 		}
 		throw new Error('Lexem with type ' + str + ' doesn\'t found');
 	}
+
 	lex() {
+		const STATE_INITIAL = 1;
+		const STATE_WORD = 10;
+
+		const STATE_NUMBER = 20;
+		const STATE_NUMBER_E = 200;
+		const STATE_NUMBER_E_AFTER = 2000;
+		const STATE_NUMBER_DOT = 201;
+		const STATE_NUMBER_DOT_AFTER = 2010;
+
+		const STATE_COLON = 30;
+		const self = this;
 		const tokens = [];
-		let lineNumber = 1;
-		let lastLineBreak = 0;
-		let i = 0;
-		while (i < this.text.length) {
+		let state = STATE_INITIAL;
+		let currentText = '';
+		let lineNo = 1;
+		let lastBreak = 0;
+		let posBeforeBreak = 0;
+		for (var i = 0; i < this.text.length; ++i) {
 			let char = this.text[i];
-
-			// BLANK CHARACTERS
-			if (char === ' ' || char === '\r' || char === '\t') {
-				i++;
-				continue;
-			}
-			if (char === '\n') {
-				lastLineBreak = i;
-				lineNumber++;
-				i++;
-				continue;
-			}
-			const token = {
-				text: '',
-				line: lineNumber,
-				start: i,
-				startFromLine: i - lastLineBreak
-			};
-			if (char === ';') {
-				token.end = i;
-				token.lexem = this.findLexem(';');
-				token.text = char;
-				tokens.push(token);
-				i++;
-				continue;
-			}
-			if (char === ':') {
-				i++;
-				char = this.text[i];
-				if (char !== '=') {
-					throw new Error('Unexpected : at line ' + token.line + ', position ' + token.startFromLine);
-				}
-				token.text = ':=';
-				token.end = i;
-				token.lexem = this.findLexem(':=');
-				tokens.push(token);
-				i++;
-				continue;
-			}
-			if (isLetter(char)) {
-				while (isLetter(char) || isDigit(char)) {
-					token.text += char;
-					i++;
-					char = this.text[i];
-				}
-				token.end = i;
-				token.value = token.text;
-				try {
-					token.lexem = this.findLexem(token.text);
-				} catch (e) {
-					token.lexem = this.findLexemByType('ID');
-					token.idRef = this.addToIdTable(token);
-				}
-				tokens.push(token);
-				continue;
-			}
-
-			if (isOP(char)) {
-				token.text = char;
-				token.value = token.text;
-				token.lexem = this.findLexem(token.text);
-				tokens.push(token);
-				i++;
-				continue;
-			}
-
-			if (isDigit(char)) {
-				let wasDot = false;
-				while (isDigit(char) || char === '.') {
-					if (char === '.' && wasDot) {
-						throw new Error('Incorrect number format at line ' + token.line + ', position ' + i);
+			currentText += char;
+			switch(state) {
+				case STATE_INITIAL:
+					if (isSpace(char)) {
+						if (char === '\n') {
+							lineNo++;
+							lastBreak = 0;
+						}
+						currentText = '';
+						continue;
+					} else {
+						currentText = char;
 					}
-					if (char === '.') wasDot = true;
-					token.text += char;
-					i++;
-					char = this.text[i];
-				}
-				token.end = i;
-				token.value = parseFloat(token.text);
-				token.lexem = this.findLexemByType('NUMBER');
-				if (!isNumber(token.value)) {
-					throw new Error('Incorrect number format at line ' + token.line + ', position ' + token.startFromLine);
-				}
-				if (isLetter(char)) {
-					throw new Error('Incorrect number format at line ' + lineNumber + ', position ' + (i - lastLineBreak));
-				}
-				token.constantRef = this.addToConstantTable(token);
-				tokens.push(token);
-				continue;
+					posBeforeBreak = i - lastBreak;
+					if (isLetter(char)) {
+						state = STATE_WORD;
+						continue;
+					}
+					if (isDigit(char)) {
+						state = STATE_NUMBER;
+						continue;
+					}
+					if (isOP(char)) {
+						addOpToken();
+						continue;
+					}
+					if (char === ':') {
+						state = STATE_COLON;
+						continue;
+					}
+					this.eUnexpectedChar(char, lineNo, posBeforeBreak);
+				case STATE_COLON:
+					if (char === '=') {
+						addOpToken();
+						continue;
+					}
+					this.eUnexpectedChar(char, lineNo, posBeforeBreak);
+				case STATE_WORD:
+					if (isLetter(char) || isNumber(char)) {
+						continue;
+					}
+					addWordToken();
+					// rollback
+					continue;
+				case STATE_NUMBER:
+					if (isDigit(char)) {
+						state = STATE_NUMBER;
+						continue;
+					}
+					if (char === '.') {
+						state = STATE_NUMBER_DOT;
+						continue;
+					}
+					if (char.toLowerCase() === 'e') {
+						i++;
+						char = this.text[i];
+						if (['-', '+'].includes(char)) {
+							state = STATE_NUMBER_E;
+							currentText += char;
+							continue;
+						}
+						this.eUnexpectedChar(char, lineNo, posBeforeBreak);
+					}
+					addNumberToken();
+					continue;
+				case STATE_NUMBER_DOT:
+					if (isDigit(char)) {
+						state = STATE_NUMBER_DOT_AFTER;
+						continue;
+					}
+					// at least one digit after dot.
+					this.eUnexpectedChar(char, lineNo, posBeforeBreak);
+				case STATE_NUMBER_DOT_AFTER:
+					if (isDigit(char)) {
+						state = STATE_NUMBER_DOT_AFTER;
+						continue;
+					}
+					if (char.toLowerCase() === 'e') {
+						i++;
+						char = this.text[i];
+						if (['-', '+'].includes(char)) {
+							state = STATE_NUMBER_E;
+							currentText += char;
+							continue;
+						}
+						this.eUnexpectedChar(char, lineNo, posBeforeBreak);
+					}
+					if (isLetter(char)) {
+						this.eUnexpectedChar(char, lineNo, posBeforeBreak);
+					}
+					addNumberToken();
+					continue;
+				case STATE_NUMBER_E:
+					if (isDigit(char)) {
+						state = STATE_NUMBER_E_AFTER;
+						continue;
+					}
+					// at least one digit after e.
+					this.eUnexpectedChar(char, lineNo, posBeforeBreak);
+				case STATE_NUMBER_E_AFTER:
+					if (isDigit(char)) {
+						continue;
+					}
+					if (isLetter(char)) {
+						this.eUnexpectedChar(char, lineNo, posBeforeBreak);
+					}
+					addNumberToken();
+					continue;
+				default:
+					throw new Error('State ' + state + ' doesn\'t found');
 			}
-			throw new Error('Undefined character ' + this.text[i] + ' at position ' + i);
 		}
-		this.tokens = tokens;
+
+		function addOpToken() {
+			state = STATE_INITIAL;
+			tokens.push({
+				lexem: self.findLexem(currentText),
+				text: currentText,
+				value: currentText,
+				line: lineNo,
+			});
+		}
+		function addOrdToken() {
+			state = STATE_INITIAL;
+			i--;
+			currentText = currentText.slice(0, -1);
+			tokens.push({
+				lexem: self.findLexem(currentText),
+				text: currentText,
+				value: currentText,
+				line: lineNo,
+			});
+		}
+		function addNumberToken() {
+			state = STATE_INITIAL;
+			i--;
+			currentText = currentText.slice(0, -1);
+			tokens.push({
+				lexem: self.findLexemByType('NUMBER'),
+				text: currentText,
+				value: parseFloat(currentText),
+				line: lineNo,
+			});
+			const token = tokens[tokens.length - 1];
+			token.constantRef = self.addToConstantTable(token);
+		}
+		function addWordToken() {
+			state = STATE_INITIAL;
+			i--;
+			const text = currentText.slice(0, -1);
+			let lexem = null;
+			try {
+				lexem = self.findLexem(text);
+			} catch (e) {
+				lexem = self.findLexemByType('ID');
+			}
+
+			tokens.push({
+				lexem,
+				text: text,
+				value: text,
+				line: lineNo,
+			});
+			if (lexem.type === 'ID') {
+				const token = tokens[tokens.length - 1];
+				token.idRef = self.addToIdTable(token);
+			}
+		}
 		return {
-			tokens,
+			tokens: tokens,
 			constantTable: this.constantTable,
 			idTable: this.idTable,
 		};
+	}
+
+	eUnexpectedChar(text, line, position) {
+		throw new Error('Unexpected ' + text + ' at line '
+			+ line + ', position ' + position);
 	}
 
 	addToConstantTable(token) {
@@ -188,6 +280,9 @@ export default class Lexer {
 	}
 }
 
+function isSpace(c) {
+	return ['\n', '\r', '\t', ' '].includes(c);
+}
 
 function isLetter(c) {
 	return /^[a-z]$/i.test(c);
@@ -198,20 +293,9 @@ function isDigit(c) {
 }
 
 function isOP(c) {
-	return /^[-*+<>{};()]$/.test(c);
+	return /^[-*+<>{};()=]$/.test(c);
 }
 
 function isNumber(str) {
 	return /^[0-9]+(?:\.[0-9]*)?$/.test(str);
 }
-
-// function test() {
-// 	var fs = require('fs');
-// 	var text = fs.readFileSync('./test.cl').toString();
-// 	var lexer = new Lexer(text);
-// 	var tokens = lexer.lex();
-// 	console.log(tokens);
-// 	// console.log(tokens);
-// }
-
-// test();

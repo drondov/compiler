@@ -1,48 +1,149 @@
-/**
- * For this grammar <id> and <number> is terminals.
- */
-const GRAMMAR = {
-  '<program>': 'program <id> begin <statements> end',
-  '<statements>': '<statement> | <statements> <statement>',
-  '<statement>': '<assign> ; | <read> ; | <write> ; | <loop> ; | <if> ;',
-  '<assign>': '<id> := <expression>',
-  '<read>': 'read ( <id> )',
-  '<write>': 'write ( <id> )',
-  '<loop>': 'while <expression> do { <statements> }',
-  '<if>': 'if <expression> then { <statements> }',
-  '<expression>': '( <expression> ) | <expression> + <expression> | <expression> – <expression> | <expression> * <expression> | <expression> / <expression> | <expression> < <expression> | <expression> > <expression> | <expression> == <expression> | <number> | <id>'
-};
-
 
 export default class SyntaxAnalyser {
   constructor(tokens) {
     this.tokens = tokens;
-    const grammar = {};
-    const grammarLeft = Object.keys(GRAMMAR);
-    for (let i = 0; i < grammarLeft.length; ++i) {
-      const left = grammarLeft[i];
-      grammar[left] = GRAMMAR[left].split('|').map(x => x.split(/\s+/));
-    }
-    this.grammar = grammar;
-    console.log('grammar');
-    console.log(grammar);
+    this.i = 0;
   }
 
   analyze() {
-    return resolve('<program>', this.tokens);
+    this.isProgram(this.tokens);
   }
 
-  isTerminal(str) {
-    if (str[0] !== '<' || str[str.length - 1] !== '>') return true;
-    if (str === '<id>' || str === '<number>') return true;
-    return false;
+  isProgram(tokens) {
+    this.check('program', tokens[0]);
+    this.check({ type: 'ID' }, tokens[1]);
+    this.check('{', tokens[2]);
+    this.isStatements(tokens.slice(3, -1));
+    this.check('}', tokens[tokens.length - 1]);
   }
 
-  resolve(str, tokens) {
-    const splited = str.split(/\s+/);
-    const stack = [];
-    for (let i = 0; tokens.length; ++i) {
-
+  isStatements(tokens) {
+    for (let i = 0; i < tokens.length; ++i) {
+      let currentStatement = [];
+      let brackets = 0;
+      while (i < tokens.length && (tokens[i].text !== ';' || brackets !== 0)) {
+        if (tokens[i].text === '{') brackets++;
+        if (tokens[i].text === '}') brackets--;
+        currentStatement.push(tokens[i]);
+        i++;
+      }
+      if (brackets < 0) this.error(tokens[tokens.length - 1], ' missing open bracket', true);
+      if (brackets > 0) this.error(tokens[tokens.length - 1], ' missing close bracket', true);
+      this.isStatement(currentStatement);
+      currentStatement = [];
     }
+    if (tokens[tokens.length - 1].text !== ';') this.error(tokens[tokens.length - 1], 'a semicolon');
   }
+
+  isStatement(tokens) {
+    const possibilities = ['isAssign', 'isWrite', 'isRead', 'isLoop', 'isIf'];
+    const isValid = possibilities.some(fName => {
+      try {
+        this[fName](tokens);
+        return true;
+      } catch (e) {
+        console.error(e);
+        return false;
+      }
+    });
+    if (!isValid) this.error(tokens[0], 'a statement');
+    return true;
+  }
+
+  isIf(tokens) {
+    this.check('if', tokens[0]);
+    const expr = [];
+    let startOfStatements = -1;
+    for (let i = 1; i < tokens.length; ++i) {
+      if (tokens[i].text === 'then' && tokens[i + 1].text === '{') {
+        startOfStatements = i + 2;
+        break;
+      }
+      expr.push(tokens[i]);
+    }
+    if (!expr.length && startOfStatements !== -1) {
+      this.error(tokens[0], 'an expression after if keyword');
+    }
+    this.isExpression(expr);
+    this.isStatements(tokens.slice(startOfStatements, -1));
+    this.check('}', tokens[tokens.length - 1]);
+  }
+
+  isLoop(tokens) {
+    this.check('while', tokens[0]);
+    const expr = [];
+    let startOfStatements = -1;
+    for (let i = 1; i < tokens.length; ++i) {
+      if (tokens[i].text === 'do' && tokens[i + 1].text === '{') {
+        startOfStatements = i + 2;
+        break;
+      }
+      expr.push(tokens[i]);
+    }
+    if (!expr.length && startOfStatements !== -1) {
+      this.error(tokens[0], 'an expression after while keyword');
+    }
+    this.isExpression(expr);
+    this.isStatements(tokens.slice(startOfStatements, -1));
+    this.check('}', tokens[tokens.length - 1]);
+  }
+
+  isWrite(tokens) {
+    this.check('write', tokens[0]);
+    this.check('(', tokens[1]);
+    this.check({ type: 'ID' }, tokens[2]);
+    this.check(')', tokens[3]);
+  }
+
+  isRead(tokens) {
+    this.check('read', tokens[0]);
+    this.check('(', tokens[1]);
+    this.check({ type: 'ID' }, tokens[2]);
+    this.check(')', tokens[3]);
+  }
+
+  isAssign(tokens) {
+    this.check({ type: 'ID' }, tokens[0]);
+    this.check(':=', tokens[1]);
+    console.log('assign', tokens.slice(2))
+    this.isExpression(tokens.slice(2));
+  }
+
+  isExpression(tokens) {
+    if (tokens.length === 1 && (tokens[0].lexem.type === 'ID' || tokens[0].lexem.type == 'NUMBER')) {
+      return true;
+    }
+    if (tokens[0].text === '(') {
+      this.check(tokens[tokens.length - 1], ')');
+      return true;
+    }
+    if (tokens[0].text !== '(' && tokens[0].lexem.type !== 'ID' && tokens[0].lexem.type !== 'NUMBER') {
+      this.error(tokens[0], 'should be id|number|(', true);
+    }
+    this.check({ type: 'operator' }, tokens[1]);
+    // TODO: Add check for right operand.
+    return true;
+  }
+
+  check(rule, token) {
+    console.log('check', rule);
+    // const token = this.tokens[this.i];
+    if (typeof rule === 'string') {
+      if (rule !== token.text) this.error(token, rule);
+      return true;
+    }
+    if (rule instanceof Object && rule.type) {
+      if (rule.type !== token.lexem.type) this.error(token, 'a type of ' + rule.type);
+      return true;
+    }
+    throw new Error('Check is invalid');
+  }
+
+
+
+  error(token, expected, rmShouldBe) {
+    throw new Error('Syntax Error: token "' + token.text + '" at line '
+      + token.line + (rmShouldBe ? '' : ' should be ') + expected);
+  }
+
 }

@@ -11,11 +11,12 @@ module.exports = {
 			query: {
 				presets: ['es2015', 'react']
 			},
-			exclude: /node_modules/
+			exclude: /node_modules|vendor/
 		}]
 	},
 	devServer: {
 		port: 8000,
 		inline: true,
-	}
+	},
+	devtool: "source-map"
 };
