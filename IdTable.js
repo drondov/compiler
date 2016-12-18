@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default class ConstantTable extends React.Component {
+export default class IdTable extends React.Component {
   render() {
     const ids = this.props.ids;
     const children = [];
@@ -12,7 +12,7 @@ export default class ConstantTable extends React.Component {
         <td>{ids[i].value}</td>
       </tr>);
     }
-    return <table class="ids-table">
+    return <table className="ids-table">
       <tbody children={children}></tbody>
     </table>
   }

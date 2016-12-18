@@ -130,23 +130,34 @@ export default class SyntaxAnalyser {
     }
     this.check({ type: 'operator' }, tokens[1]);
 
-    let rightOperand = [];
-    // if (tokens[2].text === '(') {
-    rightOperand = tokens.slice(2);
-    // } else {
-    //   let brackets = 0;
-    //   for (let i = 2; i < tokens.length; ++i) {
-    //     if (tokens[i].text === ')' && brackets === 0 && i > 2) break;
-    //     if (tokens[i].text === '(') brackets++;
-    //     if (tokens[i].text === ')') brackets++;
-    //     rightOperand.push(tokens[i]);
-    //   }
-    // }
-    console.log('right', rightOperand);
+    const rightOperand = tokens.slice(2);
+
     this.isExpression(rightOperand);
 
     return true;
   }
+
+  // isLogicalExpression(tokens) {
+  //   let left = [];
+  //   let right = [];
+  //   let op = null;
+  //   for (let i = 0; i < tokens.length; ++i) {
+  //     if (['>', '<', '&', '|'].includes(tokens[i].text)) {
+  //       op = tokens[i];
+  //       left = tokens.slice(0, i);
+  //       right = tokens.slice(i + 1);
+  //       if (['&', '|'].includes(op.text)) {
+  //         this.isLogicalExpression(left);
+  //         this.isLogicalExpression(right);
+  //       } else {
+  //         this.isExpression(left);
+  //         this.isExpression(right);
+  //       }
+  //       break;
+  //     }
+  //     left.push(tokens[i]);
+  //   }
+  // }
 
   check(rule, token) {
     console.log('check', rule);

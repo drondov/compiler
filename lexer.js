@@ -11,13 +11,15 @@ export default class Lexer {
 			{ text: '(', type: 'operator' },
 			{ text: ')', type: 'operator' },
 			{ text: ':=', type: 'statement' },
-			{ text: '=', type: 'operator' },
 			{ text: '*', type: 'operator' },
 			{ text: '/', type: 'operator' },
 			{ text: '+', type: 'operator' },
 			{ text: '-', type: 'operator' },
-			{ text: '<', type: 'operator' },
-			{ text: '>', type: 'operator' },
+			{ text: '|', type: 'operator' },
+			{ text: '&', type: 'loperator' },
+			{ text: '<', type: 'loperator' },
+			{ text: '>', type: 'loperator' },
+			{ text: '=', type: 'loperator' },
 			{ text: ';', type: 'delimeter' },
 			{ text: 'read', type: 'statement' },
 			{ text: 'write', type: 'statement' },
@@ -27,7 +29,7 @@ export default class Lexer {
 		this.lexems.forEach((lexem, i) => lexem.code = i);
 		this.constantTable = [];
 		this.idTable = [];
-		this.text = text;
+		this.text = text + '\n'; //  костыль %)
 	}
 
 	findLexem(str) {
@@ -36,7 +38,7 @@ export default class Lexer {
 				return this.lexems[i];
 			}
 		}
-		throw new Error('Lexem ' + str + 'doesn\'t found');
+		throw new Error('Lexem ' + str + ' doesn\'t found');
 	}
 	findLexemByType(str) {
 		for (let i = 0; i < this.lexems.length; ++i) {
@@ -293,7 +295,7 @@ function isDigit(c) {
 }
 
 function isOP(c) {
-	return /^[-*+<>{};()=]$/.test(c);
+	return /^[-*+<>{};()=&|]$/.test(c);
 }
 
 function isNumber(str) {

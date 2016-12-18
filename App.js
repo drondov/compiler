@@ -1,7 +1,7 @@
 import React from 'react';
 
 import Lexems from './Lexems';
-import SyntaxAnalyser from './syntax-analyser';
+import SyntaxAnalyser from './syntax-analyzer';
 import ConstantTable from './ConstantTable';
 import IdTable from './IdTable';
 import Errors from './Errors';
@@ -10,11 +10,11 @@ import Lexer from './lexer';
 
 const defaultProgram = `
 program sum100 {
-	i := 0;
+	i := 100;
 	sum := 0;
-	while i < 100.999 do {
+	while i > 0 do {
 		sum := sum + i;
-		i := i + 1;
+		i := i - 1;
 	};
 	write(sum);
 }
@@ -46,7 +46,7 @@ export default class App extends React.Component {
 		return (
 			<div>
 				<div className="row">
-					<textarea className="text-editor small-3 large-3 columns" onKeyUp={this.onKeyUp.bind(this)}>{this.state.program}</textarea>
+					<textarea className="text-editor small-3 large-3 columns" onKeyUp={this.onKeyUp.bind(this)} defaultValue={this.state.program}></textarea>
 					<div className="small-3 large-3 columns">
 						<ConstantTable constants={this.lexerData.constantTable}/>
 					</div>
