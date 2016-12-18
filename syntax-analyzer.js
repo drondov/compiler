@@ -85,6 +85,9 @@ export default class SyntaxAnalyser {
   }
 
   isM() {
+    if (this.tryMatch('-')) {
+      return this.isT();
+    }
     if (this.tryMatch({ type: 'NUMBER' })) return true;
     if (this.tryMatch({ type: 'ID' })) return true;
     if (this.tryMatch('(')) {
