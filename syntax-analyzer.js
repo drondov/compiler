@@ -116,6 +116,11 @@ export default class SyntaxAnalyser {
   }
 
   isLM() {
+    if (this.tryMatch('(')) {
+      this.isLogicalExpression();
+      this.match(')');
+      return true;
+    }
     this.isExpression();
     if (this.matchEither(['<', '>', '='])) {
       return this.isExpression();
