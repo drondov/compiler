@@ -141,10 +141,7 @@ export default class SyntaxAnalyser {
   }
 
   tryMatchEither(array) {
-    for (let j = 0; j < array.length; ++j) {
-      if (this.tryMatch(array[j])) return true;
-    }
-    return false;
+    return array.some(this.tryMatch.bind(this));
   }
 
   tryMatch(o) {
