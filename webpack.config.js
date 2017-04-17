@@ -6,12 +6,12 @@ module.exports = {
 	},
 	module: {
 		loaders: [{
-			loader: 'babel',
+			loader: 'babel-loader',
 			test: /\.js$/,
 			query: {
 				presets: ['es2015', 'react']
 			},
-			exclude: /node_modules|vendor/
+			exclude: /node_modules/
 		}]
 	},
 	devServer: {

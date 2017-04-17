@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "webpack-dev-server"
   },
   "author": "Ivan Drondov",
   "license": "MIT",
@@ -15,6 +16,7 @@
     "babel-preset-react": "6.16.0",
     "react": "15.4.1",
     "react-dom": "15.4.1",
-    "webpack": "1.14.0"
+    "webpack": "2.4.1",
+    "webpack-dev-server": "2.4.2"
   }
 }
