@@ -1,12 +1,13 @@
 import React from 'react';
 
-import Lexems from './Lexems';
-import SyntaxAnalyser from './syntax-analyzer';
+import Lexer from '../lexer';
+import SyntaxAnalyser from '../syntax-analyzer';
+
 import ConstantTable from './ConstantTable';
 import IdTable from './IdTable';
+import Lexems from './Lexems';
 import Errors from './Errors';
 
-import Lexer from './lexer';
 
 const defaultProgram = `
 program sum100 {
@@ -18,7 +19,7 @@ program sum100 {
 	};
 	write(sum);
 }
-`;
+`.trim();
 
 export default class App extends React.Component {
 	constructor(props) {
@@ -30,6 +31,19 @@ export default class App extends React.Component {
 	onKeyUp(event) {
 		const program = event.target.value;
 		this.setState({ program });
+	}
+	onKeyDown(event) {
+		if (event.keyCode === 9) {
+			const pos = event.target.selectionStart;
+			const text = event.target.value;
+
+			event.target.value = text.slice(0, pos) + '\t' + text.slice(pos);
+			event.target.selectionStart = pos + 1;
+			event.target.selectionEnd = pos + 1;
+			event.preventDefault();
+			return false;
+		}
+		console.log(event.keyCode);
 	}
 	render() {
 		const lexer = new Lexer(this.state.program);
@@ -46,7 +60,12 @@ export default class App extends React.Component {
 		return (
 			<div>
 				<div className="row">
-					<textarea className="text-editor small-3 large-3 columns" onKeyUp={this.onKeyUp.bind(this)} defaultValue={this.state.program}></textarea>
+					<textarea
+						className="text-editor small-3 large-3 columns"
+						onKeyUp={this.onKeyUp.bind(this)}
+						onKeyDown={this.onKeyDown.bind(this)}
+						defaultValue={this.state.program}>
+					</textarea>
 					<div className="small-3 large-3 columns">
 						<ConstantTable constants={this.lexerData.constantTable}/>
 					</div>
