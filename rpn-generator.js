@@ -10,30 +10,67 @@ const precedenceTable = {
   '=': 8,
   '&': 7,
   '|': 6,
-	':=': 3,
-	'write': 3,
-	'read': 3,
-  '(': 2,
+	':=': 5,
+	'write': 5,
+	'read': 5,
+  '(': 4,
+  ';': 3,
   'if': 2,
+  'while': 2,
 };
 
-function getPrecendence(token) {
-	const precedence = precedenceTable[token.text];
-	if (precedence) {
-		return precedence;
+function getPrecedence(token) {
+	const precedence = precedenceTable[token.text] || precedenceTable[token.lexem.type];
+	if (_.isUndefined(precedence)) {
+    throw new Error(`Not found operator '${token.text}' in precedence table`);
 	}
-	throw new Error(`Not found operator '${token.text}' in precedence table`);
+  return precedence;
 }
 
 function top(stack) {
 	return stack[stack.length - 1];
-} 
+}
+
+
 
 export default class RPNGenerator {
+
+	constructor() {
+		this._labelIndex = 0;
+		this.labelStack = [];
+	}
+
+	createJNE() {
+		// add to label table here.
+
+		const labelIndex = ++this._labelIndex;
+		this.labelStack.push(labelIndex);
+    return {
+      text: `JNE[${labelIndex}]`,
+      labelIndex,
+      lexem: {
+      	type: 'JNE',
+      },
+    };
+	}
+
+	createLabel() {
+		const labelIndex = this.labelStack.pop();
+		const token = {
+			text: `LABEL[${labelIndex}]`,
+      labelIndex,
+			lexem: {
+				type: 'LABEL',
+			},
+		};
+    return token;
+	}
+
 	generate(lexerData) {
 		// remove unnecessary tokens. `Program` `IDN` `{` ... `}`
 		const tokens = _
 			.cloneDeep(lexerData.tokens);
+
 		tokens.splice(0, 3);
 		tokens.splice(-1, 1);
 
@@ -42,23 +79,25 @@ export default class RPNGenerator {
 		for (let i = 0; i < tokens.length; ++i) {
 			const token = tokens[i];
 
-			if (token.lexem.type === 'delimiter') {
-				result.push(...stack.reverse());
-				stack.splice(0);
-
-				result.push(token);
-				continue;
-			}
-
 			if (token.lexem.type === 'NUMBER' || token.lexem.type === 'ID') {
 				result.push(token);
 				continue;
 			}
 
-			if (token.text === '(') {
-				stack.push(token);
+
+      if (['(', 'if', 'while'].includes(token.text)) {
+        stack.push(token);
+        continue;
+      }
+
+      if (token.text === '}') {
+				while (top(stack).text !== 'if' && top(stack).text !== 'while') {
+					result.push(stack.pop());
+				}
+				stack.pop();
+				result.push(this.createLabel());
 				continue;
-			}
+      }
 
 			if (token.text === ')') {
 				while (top(stack).text !== '(') {
@@ -68,23 +107,25 @@ export default class RPNGenerator {
 				continue;
 			}
 
-			if (token.lexem.type === 'operator' || ['write', 'read'].includes(token.text)) {
-				while (stack.length && getPrecendence(top(stack)) >= getPrecendence(token)) {
+      if (token.text === 'then') {
+        while (top(stack).text !== 'if') {
+          result.push(stack.pop());
+        }
+        // stack.pop(); // pop `if` statement.
+        result.push(this.createJNE());
+        continue;
+      }
+
+			if (token.lexem.type === 'operator' || ['write', 'read', ';'].includes(token.text)) {
+				while (stack.length && getPrecedence(top(stack)) >= getPrecedence(token)) {
 					result.push(stack.pop());
 				}
-				stack.push(token);
+				if (token.lexem.type !== 'delimiter') {
+          stack.push(token);
+				}
 				continue;
 			}
 
-			if (token.text === 'then') {
-        result.push(...stack.reverse());
-        stack.splice(0);
-
-        result.push(token);
-				continue;
-			}
-
-			// stack.push(token);
 			continue;
 
 			throw new Error('Undefined token.');

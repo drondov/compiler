@@ -10,28 +10,28 @@ import Lexems from './Lexems';
 import Errors from './Errors';
 
 
-// const defaultProgram = `
-// program sum100 {
-// 	i := 100;
-// 	sum := 0;
-// 	while i > 0 do {
-// 		sum := sum + i;
-// 		i := i - 1;
-// 	};
-// 	write(sum);
-// }
-// `.trim();
-
 const defaultProgram = `
 program sum100 {
 	i := 100;
-	j := 111;
-	if i < 10 then {
-		write(i);
+	sum := 0;
+	while i > 0 do {
+		sum := sum + i;
+		i := i - 1;
 	};
-	write(i + j);
+	write(sum);
 }
 `.trim();
+
+// const defaultProgram = `
+// program sum100 {
+// 	i := 100;
+// 	j := 111;
+// 	if i < 10 then {
+// 		write(i);
+// 	};
+// 	write(i + j);
+// }
+// `.trim();
 
 export default class App extends React.Component {
 	constructor(props) {
