@@ -56,7 +56,6 @@ export default class RPNGenerator {
 
 
 	createLabel() {
-		// const labelIndex = this.labelStack.pop();
     const labelIndex = ++this._labelIndex;
 		const token = {
 			text: `LABEL[${labelIndex}]`,
@@ -65,7 +64,6 @@ export default class RPNGenerator {
 				type: 'LABEL',
 			},
 		};
-		// this.labelStack.push(token);
     return token;
 	}
 
@@ -86,7 +84,6 @@ export default class RPNGenerator {
 				result.push(token);
 				continue;
 			}
-
 
       if (['(', 'if'].includes(token.text)) {
         stack.push(token);
@@ -120,17 +117,14 @@ export default class RPNGenerator {
 
         const jneLabel = this.labelStack.pop()
 
-
 				const keywordToken = stack.pop();
 				if (keywordToken.text === 'while') {
 					const jmp = this.createJump('JMP', this.labelStack.pop());
 
 					result.push(jmp);
 				}
-
 				result.push(jneLabel);
 
-				// result.push(this.createLabel());
 				continue;
       }
 
