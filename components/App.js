@@ -2,6 +2,7 @@ import React from 'react';
 
 import Lexer from '../lexer';
 import SyntaxAnalyser from '../syntax-analyzer';
+import RPNGenerator from '../rpn-generator';
 
 import ConstantTable from './ConstantTable';
 import IdTable from './IdTable';
@@ -9,15 +10,26 @@ import Lexems from './Lexems';
 import Errors from './Errors';
 
 
+// const defaultProgram = `
+// program sum100 {
+// 	i := 100;
+// 	sum := 0;
+// 	while i > 0 do {
+// 		sum := sum + i;
+// 		i := i - 1;
+// 	};
+// 	write(sum);
+// }
+// `.trim();
+
 const defaultProgram = `
 program sum100 {
 	i := 100;
-	sum := 0;
-	while i > 0 do {
-		sum := sum + i;
-		i := i - 1;
+	j := 111;
+	if i < 10 then {
+		write(i);
 	};
-	write(sum);
+	write(i + j);
 }
 `.trim();
 
@@ -52,6 +64,12 @@ export default class App extends React.Component {
 			this.lexerData = lexer.lex();
 			const syntaxAnalyser = new SyntaxAnalyser(this.lexerData.tokens);
 			syntaxAnalyser.analyze();
+
+			const rpnGenerator = new RPNGenerator();
+			const rpn = rpnGenerator.generate(this.lexerData);
+			console.log('rpn', rpn);
+			console.log('rpn', rpn.map(token => token.text).join(' '));
+
 		} catch (e) {
 			console.error(e);
 			error = e.message;

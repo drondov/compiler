@@ -36,9 +36,7 @@ export default class SyntaxAnalyser {
   }
 
   isRead() {
-    this.match(['read', '(']);
-    this.isExpression();
-    return this.match(')');
+    return this.match(['read', '(', { type: 'ID' }, ')']);
   }
 
   isWrite() {

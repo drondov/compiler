@@ -10,17 +10,17 @@ export default class Lexer {
 			{ text: '{', type: 'keyword' },
 			{ text: '(', type: 'operator' },
 			{ text: ')', type: 'operator' },
-			{ text: ':=', type: 'statement' },
+			{ text: ':=', type: 'operator' },
 			{ text: '*', type: 'operator' },
 			{ text: '/', type: 'operator' },
 			{ text: '+', type: 'operator' },
 			{ text: '-', type: 'operator' },
 			{ text: '|', type: 'operator' },
-			{ text: '&', type: 'loperator' },
-			{ text: '<', type: 'loperator' },
-			{ text: '>', type: 'loperator' },
-			{ text: '=', type: 'loperator' },
-			{ text: ';', type: 'delimeter' },
+			{ text: '&', type: 'operator' },
+			{ text: '<', type: 'operator' },
+			{ text: '>', type: 'operator' },
+			{ text: '=', type: 'operator' },
+			{ text: ';', type: 'delimiter' },
 			{ text: 'read', type: 'statement' },
 			{ text: 'write', type: 'statement' },
 			{ type: 'ID' },
@@ -295,7 +295,7 @@ function isDigit(c) {
 }
 
 function isOP(c) {
-	return /^[-*+<>{};()=&|]$/.test(c);
+	return /^[-*+<>{};()=&|/]$/.test(c);
 }
 
 function isNumber(str) {
