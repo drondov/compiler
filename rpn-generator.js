@@ -15,8 +15,9 @@ const precedenceTable = {
 	'read': 5,
   '(': 4,
   ';': 3,
-  'if': 2,
-  'while': 2,
+  '{': 2,
+	'if': 2,
+	'while': 2,
 };
 
 function getPrecedence(token) {
@@ -32,7 +33,6 @@ function top(stack) {
 }
 
 
-
 export default class RPNGenerator {
 
 	constructor() {
@@ -40,22 +40,24 @@ export default class RPNGenerator {
 		this.labelStack = [];
 	}
 
-	createJNE() {
-		// add to label table here.
+	createJump(type, labelToken) {
+		if (!['JNE', 'JMP'].includes(type)) {
+			throw new Error('Unknown type of jump.');
+		}
 
-		const labelIndex = ++this._labelIndex;
-		this.labelStack.push(labelIndex);
     return {
-      text: `JNE[${labelIndex}]`,
-      labelIndex,
+      text: `JNE[${labelToken.labelIndex}]`,
+      labelIndex: labelToken.labelIndex,
       lexem: {
       	type: 'JNE',
       },
     };
 	}
 
+
 	createLabel() {
-		const labelIndex = this.labelStack.pop();
+		// const labelIndex = this.labelStack.pop();
+    const labelIndex = ++this._labelIndex;
 		const token = {
 			text: `LABEL[${labelIndex}]`,
       labelIndex,
@@ -63,6 +65,7 @@ export default class RPNGenerator {
 				type: 'LABEL',
 			},
 		};
+		// this.labelStack.push(token);
     return token;
 	}
 
@@ -85,17 +88,38 @@ export default class RPNGenerator {
 			}
 
 
-      if (['(', 'if', 'while'].includes(token.text)) {
+      if (['(', 'if'].includes(token.text)) {
         stack.push(token);
         continue;
       }
 
+      // if (token.text === 'while') {
+				// stack.push(token);
+				// const label = this.createLabel();
+				// this.labelStack.push(label);
+				// result.push(label);
+				// continue;
+      // }
+
+      if (token.text === '{') {
+        while (top(stack).text !== 'if' && top(stack).text !== 'while') {
+        	result.push(stack.pop());
+        }
+        stack.pop();
+        stack.push(token);
+        const label = this.createLabel();
+        this.labelStack.push(label);
+        result.push(this.createJump('JNE', label));
+        continue;
+      }
+
       if (token.text === '}') {
-				while (top(stack).text !== 'if' && top(stack).text !== 'while') {
+				while (top(stack).text !== '{') {
 					result.push(stack.pop());
 				}
 				stack.pop();
-				result.push(this.createLabel());
+				result.push(this.labelStack.pop());
+				// result.push(this.createLabel());
 				continue;
       }
 
@@ -107,14 +131,13 @@ export default class RPNGenerator {
 				continue;
 			}
 
-      if (token.text === 'then') {
-        while (top(stack).text !== 'if') {
-          result.push(stack.pop());
-        }
-        // stack.pop(); // pop `if` statement.
-        result.push(this.createJNE());
-        continue;
-      }
+      // if (token.text === 'then') {
+      //   while (top(stack).text !== 'if') {
+      //     result.push(stack.pop());
+      //   }
+      //   result.push(this.createJNE());
+      //   continue;
+      // }
 
 			if (token.lexem.type === 'operator' || ['write', 'read', ';'].includes(token.text)) {
 				while (stack.length && getPrecedence(top(stack)) >= getPrecedence(token)) {
