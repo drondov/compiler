@@ -10,6 +10,22 @@ import Lexems from './Lexems';
 import Errors from './Errors';
 
 
+const defaultProgram = `
+program fib {
+	i := 0;
+	a := 0;
+	b := 1;
+	read(n);
+	while i < n do {
+		new := a + b;
+		a := b;
+		b := new;
+		i := i + 1;
+	};
+	write(sum);
+}
+`.trim();
+
 // const defaultProgram = `
 // program sum100 {
 // 	i := 100;
@@ -22,16 +38,18 @@ import Errors from './Errors';
 // }
 // `.trim();
 
-const defaultProgram = `
-program sum100 {
-	i := 100;
-	j := 111;
-	if i < 10 then {
-		write(i);
-	};
-	write(i + j);
-}
-`.trim();
+
+//
+// const defaultProgram = `
+// program sum100 {
+// 	i := 100;
+// 	j := 111;
+// 	if i < 10 then {
+// 		write(i);
+// 	};
+// 	write(i + j);
+// }
+// `.trim();
 
 export default class App extends React.Component {
 	constructor(props) {

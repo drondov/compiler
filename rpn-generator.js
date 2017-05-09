@@ -46,10 +46,10 @@ export default class RPNGenerator {
 		}
 
     return {
-      text: `JNE[${labelToken.labelIndex}]`,
+      text: `${type}[${labelToken.labelIndex}]`,
       labelIndex: labelToken.labelIndex,
       lexem: {
-      	type: 'JNE',
+      	type: type,
       },
     };
 	}
@@ -93,19 +93,18 @@ export default class RPNGenerator {
         continue;
       }
 
-      // if (token.text === 'while') {
-				// stack.push(token);
-				// const label = this.createLabel();
-				// this.labelStack.push(label);
-				// result.push(label);
-				// continue;
-      // }
+      if (token.text === 'while') {
+				stack.push(token);
+				const label = this.createLabel();
+				this.labelStack.push(label);
+				result.push(label);
+				continue;
+      }
 
       if (token.text === '{') {
         while (top(stack).text !== 'if' && top(stack).text !== 'while') {
         	result.push(stack.pop());
         }
-        stack.pop();
         stack.push(token);
         const label = this.createLabel();
         this.labelStack.push(label);
@@ -117,8 +116,20 @@ export default class RPNGenerator {
 				while (top(stack).text !== '{') {
 					result.push(stack.pop());
 				}
-				stack.pop();
-				result.push(this.labelStack.pop());
+				stack.pop(); // pop left bracket.
+
+        const jneLabel = this.labelStack.pop()
+
+
+				const keywordToken = stack.pop();
+				if (keywordToken.text === 'while') {
+					const jmp = this.createJump('JMP', this.labelStack.pop());
+
+					result.push(jmp);
+				}
+
+				result.push(jneLabel);
+
 				// result.push(this.createLabel());
 				continue;
       }
@@ -131,13 +142,6 @@ export default class RPNGenerator {
 				continue;
 			}
 
-      // if (token.text === 'then') {
-      //   while (top(stack).text !== 'if') {
-      //     result.push(stack.pop());
-      //   }
-      //   result.push(this.createJNE());
-      //   continue;
-      // }
 
 			if (token.lexem.type === 'operator' || ['write', 'read', ';'].includes(token.text)) {
 				while (stack.length && getPrecedence(top(stack)) >= getPrecedence(token)) {
