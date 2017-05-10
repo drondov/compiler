@@ -45,9 +45,14 @@ export default class RPNExecuter {
 
   applyOperator2(operator, a, b) {
     switch(operator.text) {
+      case '*': return a * b;
+      case '/': return a / b;
       case '+': return a + b;
+      case '-': return a - b;
       case '>': return a > b;
       case '<': return a < b;
+      case '&': return a && b;
+      case '|': return a || b;
     }
     throw new Error('Unknown operator');
   }
@@ -55,9 +60,9 @@ export default class RPNExecuter {
   execute() {
     for (; this.i < this.tokens.length; ++this.i) {
       const token = this.tokens[this.i];
-      console.log('ITERATION', token);
-      console.log('STACK',this.stack.map(s => s.text).join(' '));
-      console.log('VARS', this.varTable);
+      // console.log('ITERATION', token);
+      // console.log('STACK',this.stack.map(s => s.text).join(' '));
+      // console.log('VARS', this.varTable);
 
       if (token.lexem.type === 'JNE') {
         if (this.stack.pop() === false) {
@@ -84,7 +89,7 @@ export default class RPNExecuter {
       if (token.text === ':=') {
         const b = this.stack.pop();
         const a = this.stack.pop();
-        console.log('OPERATION', a, token, b);
+        // console.log('OPERATION', a, token, b);
         this.varTable[a.text] = this.resolve(b);
         continue;
       }
@@ -92,12 +97,12 @@ export default class RPNExecuter {
       if (token.lexem.type === 'operator' && token.lexem.args === 2) {
         const b = this.resolve(this.stack.pop());
         const a = this.resolve(this.stack.pop());
-        console.log('OPERATION', a, token, b);
+        // console.log('OPERATION', a, token, b);
         const result = this.applyOperator2(token, a, b);
 
         if (typeof result !== 'undefined') {
           this.stack.push(result);
-          console.log('result', result);
+          // console.log('result', result);
         }
         continue;
       }
