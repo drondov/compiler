@@ -3,6 +3,7 @@ import React from 'react';
 import Lexer from '../lexer';
 import SyntaxAnalyser from '../syntax-analyzer';
 import RPNGenerator from '../rpn-generator';
+import RPNExecuter from '../rpn-executer';
 
 import ConstantTable from './ConstantTable';
 import IdTable from './IdTable';
@@ -22,7 +23,7 @@ program fib {
 		b := new;
 		i := i + 1;
 	};
-	write(sum);
+	write(b);
 }
 `.trim();
 
@@ -87,6 +88,8 @@ export default class App extends React.Component {
 			const rpn = rpnGenerator.generate(this.lexerData);
 			console.log('rpn', rpn);
 			console.log('rpn', rpn.map(token => token.text).join(' '));
+      const executer = new RPNExecuter({ tokens: rpn });
+      executer.execute();
 
 		} catch (e) {
 			console.error(e);
