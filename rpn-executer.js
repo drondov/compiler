@@ -14,6 +14,7 @@ export default class RPNExecuter {
 
   resolve(token) {
     if (typeof token === 'number') return token;
+    if (typeof token === 'boolean') return token;
     if (token.lexem.type === 'NUMBER') return token.value;
     if (token.lexem.type === 'ID') {
       if (!(token.text in this.varTable)) {
