@@ -132,6 +132,9 @@ export default class Lexer {
 						}
 						this.eUnexpectedChar(char, lineNo, posBeforeBreak);
 					}
+					if (isLetter(char)) {
+						this.eUnexpectedChar(char, lineNo, posBeforeBreak);
+					}
 					addNumberToken();
 					continue;
 				case STATE_NUMBER_DOT:

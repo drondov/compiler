@@ -6,10 +6,20 @@ export default class RPNExecuter {
     this.i = 0;
     this.tokens = data.tokens;
     this.varTable = {};
+    this.logs = [];
+    this.pause = false;
+    this.pauseVariable = null;
+  }
+
+  continue(data) {
+    if (!this.pause) throw new Error('Program is not paused!');
+    this.pause = false;
+    this.varTable[this.pauseVariable] = data;
+    this.execute();
   }
 
   write(a) {
-    console.log('Output: ', a);
+    this.logs.push(a);
   }
 
   resolve(token) {
@@ -38,7 +48,9 @@ export default class RPNExecuter {
     switch(operator.text) {
       case 'write': return this.write(this.resolve(a));
       case 'read':
-        this.varTable[a.text] = 10;
+        // this.varTable[a.text] = 10;
+        this.pauseVariable = a.text;
+        this.pause = true;
         return;
     }
     throw new Error('Unknown operator');
@@ -111,6 +123,10 @@ export default class RPNExecuter {
       if (token.lexem.type === 'operator' && token.lexem.args === 1) {
         const a = this.stack.pop();
         const result = this.applyOperator1(token, a);
+        if (this.pause) {
+          this.i++;
+          break;
+        }
         console.log('OPERATION', a, token);
         if (typeof result !== 'undefined') {
           this.stack.push(result);

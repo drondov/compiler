@@ -2,13 +2,12 @@ import React from 'react';
 
 import Lexer from '../lexer';
 import SyntaxAnalyser from '../syntax-analyzer';
-import RPNGenerator from '../rpn-generator';
-import RPNExecuter from '../rpn-executer';
 
 import ConstantTable from './ConstantTable';
 import IdTable from './IdTable';
 import Lexems from './Lexems';
 import Errors from './Errors';
+import Console from './Console';
 
 
 const defaultProgram = `
@@ -76,6 +75,7 @@ export default class App extends React.Component {
 		}
 		console.log(event.keyCode);
 	}
+
 	render() {
 		const lexer = new Lexer(this.state.program);
 		let error = null;
@@ -84,14 +84,8 @@ export default class App extends React.Component {
 			const syntaxAnalyser = new SyntaxAnalyser(this.lexerData.tokens);
 			syntaxAnalyser.analyze();
 
-			const rpnGenerator = new RPNGenerator();
-			const rpn = rpnGenerator.generate(this.lexerData);
-			console.log('rpn', rpn);
-			console.log('rpn', rpn.map(token => token.text).join(' '));
-      const executer = new RPNExecuter({ tokens: rpn });
-      executer.execute();
-
 		} catch (e) {
+			this.lexerData.error = e.message;
 			console.error(e);
 			error = e.message;
 		}
@@ -106,10 +100,14 @@ export default class App extends React.Component {
 						defaultValue={this.state.program}>
 					</textarea>
 					<div className="small-3 large-3 columns">
+						<h3>Constant Table</h3>
 						<ConstantTable constants={this.lexerData.constantTable}/>
+						<h3>Id Table</h3>
+						<IdTable ids={this.lexerData.idTable}/>
 					</div>
 					<div className="small-3 large-3 columns">
-						<IdTable ids={this.lexerData.idTable}/>
+						<h3>Console</h3>
+						<Console lexerData={this.lexerData} />
 					</div>
 				</div>
 				<div>
