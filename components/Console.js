@@ -20,7 +20,7 @@ export default class Console extends React.Component {
 		};
 	}
 
-	execute() {
+	run() {
 		const rpnGenerator = new RPNGenerator();
 		const rpn = rpnGenerator.generate(this.state.lexerData);
 		console.log('rpn', rpn);
@@ -28,7 +28,7 @@ export default class Console extends React.Component {
         const executer = new RPNExecuter({
             tokens: rpn,
         });
-        executer.execute();
+		executer.execute();
 		this.setState({
 			executer,
 			logs: executer.logs,
@@ -42,13 +42,22 @@ export default class Console extends React.Component {
 			alert('Value is invalid');
 			return;
 		}
-		this.state.executer.continue(value);
-		this.setState(state => {
-			return {
-				pause: state.executer.pause,
-				logs: state.executer.logs,
-			};
-		});
+		try {
+			this.state.executer.continue(value);
+			this.setState(state => {
+				return {
+					pause: state.executer.pause,
+					logs: state.executer.logs,
+				};
+			});
+		} catch (e) {
+			this.setState(state => {
+				return {
+					pause: false,
+					logs: [...state.executer.logs, `RUNTIME ERROR: ${e.message}`],
+				};
+			});
+		}
 	}
 
 	onRun() {
@@ -63,13 +72,13 @@ export default class Console extends React.Component {
 		}
 		this.setState({
 			lexerData,
-		}, () => this.execute());
+		}, () => this.run());
 	}
 
 	render() {
 		const $logs = _.map(this.state.logs, log => {
 			return <div className="console-log">
-				Output: {log}
+				{log}
 			</div>;
 		});
 		return <div className="console">

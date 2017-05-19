@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { debugLog } from './utils';
 
 export default class RPNExecuter {
   constructor(data) {
@@ -19,7 +20,7 @@ export default class RPNExecuter {
   }
 
   write(a) {
-    this.logs.push(a);
+    this.logs.push(`Output: ${a}`);
   }
 
   resolve(token) {
@@ -73,9 +74,9 @@ export default class RPNExecuter {
   execute() {
     for (; this.i < this.tokens.length; ++this.i) {
       const token = this.tokens[this.i];
-      // console.log('ITERATION', token);
-      // console.log('STACK',this.stack.map(s => s.text).join(' '));
-      // console.log('VARS', this.varTable);
+      debugLog('ITERATION', token);
+      debugLog('STACK',this.stack.map(s => s.text).join(' '));
+      debugLog('VARS', this.varTable);
 
       if (token.lexem.type === 'JNE') {
         if (this.stack.pop() === false) {
@@ -102,7 +103,7 @@ export default class RPNExecuter {
       if (token.text === ':=') {
         const b = this.stack.pop();
         const a = this.stack.pop();
-        // console.log('OPERATION', a, token, b);
+        debugLog('OPERATION', a, token, b);
         this.varTable[a.text] = this.resolve(b);
         continue;
       }
@@ -110,12 +111,12 @@ export default class RPNExecuter {
       if (token.lexem.type === 'operator' && token.lexem.args === 2) {
         const b = this.resolve(this.stack.pop());
         const a = this.resolve(this.stack.pop());
-        // console.log('OPERATION', a, token, b);
+        debugLog('OPERATION', a, token, b);
         const result = this.applyOperator2(token, a, b);
 
         if (typeof result !== 'undefined') {
           this.stack.push(result);
-          // console.log('result', result);
+          debugLog('result', result);
         }
         continue;
       }
