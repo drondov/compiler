@@ -53,17 +53,19 @@ export default class SyntaxAnalyser {
   isIf() {
     this.match('if');
     this.isLogicalExpression();
-    this.match(['then', '{']);
+    this.match('then');
     this.isStatements();
-    return this.match('}');
+    this.match('else');
+    this.isStatements();
+    return this.match('endif');
   }
 
   isLoop() {
     this.match('while');
     this.isLogicalExpression();
-    this.match(['do', '{']);
+    this.match('do');
     this.isStatements();
-    return this.match('}');
+    return this.match('done');
   }
 
   isExpression() {
