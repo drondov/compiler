@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 export default class Lexer {
 	constructor(text) {
 		this.lexems = [
@@ -35,7 +37,7 @@ export default class Lexer {
 	findLexem(str) {
 		for (let i = 0; i < this.lexems.length; ++i) {
 			if (str === this.lexems[i].text) {
-				return this.lexems[i];
+				return _.cloneDeep(this.lexems[i]);
 			}
 		}
 		throw new Error('Lexem ' + str + ' doesn\'t found');
@@ -43,7 +45,7 @@ export default class Lexer {
 	findLexemByType(str) {
 		for (let i = 0; i < this.lexems.length; ++i) {
 			if (str === this.lexems[i].type) {
-				return this.lexems[i];
+				return _.cloneDeep(this.lexems[i]);
 			}
 		}
 		throw new Error('Lexem with type ' + str + ' doesn\'t found');

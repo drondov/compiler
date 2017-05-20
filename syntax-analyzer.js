@@ -84,6 +84,7 @@ export default class SyntaxAnalyser {
 
   isM() {
     if (this.tryMatch('-')) {
+      this.markLastAsUnaryMinus();
       return this.isT();
     }
     if (this.tryMatch({ type: 'NUMBER' })) return true;
@@ -149,6 +150,14 @@ export default class SyntaxAnalyser {
   matchEither(array) {
     if (this.tryMatchEither(array)) return true;
     this.error(this.tokens[this.i], 'one of ' + array.map(x => '"' + x + '"').join(', '));
+  }
+
+  markLastAsUnaryMinus() {
+    const token = this.tokens[this.i - 1];
+    token.text = '@';
+    token.value = '@';
+    token.lexem.text = '@';
+    token.lexem.args = 1;
   }
 
   match(o) {

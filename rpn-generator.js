@@ -1,6 +1,7 @@
 import _ from 'lodash';
 
 const precedenceTable = {
+    '@': 10,
     '*': 9,
     '/': 9,
     '+': 8,
@@ -140,6 +141,14 @@ export default class RPNGenerator {
                 continue;
             }
 
+            if (token.lexem.text === '@') {
+                while (stack.length && getPrecedence(top(stack)) > getPrecedence(token)) {
+                    result.push(stack.pop());
+                }
+                stack.push(token);
+                continue;
+            }
+
             if (token.lexem.type === 'operator' || ['write', 'read', ';'].includes(token.text)) {
                 while (stack.length && getPrecedence(top(stack)) >= getPrecedence(token)) {
                     result.push(stack.pop());
@@ -150,9 +159,6 @@ export default class RPNGenerator {
                 continue;
             }
 
-            continue;
-
-            // throw new Error('Undefined token.');
         }
         // pop all elements into `result`.
         result.push(...stack.reverse());
@@ -162,7 +168,6 @@ export default class RPNGenerator {
             rpn: _.cloneDeep(result),
         });
 
-        // console.log(_.cloneDeep(result.map(x => x.text).join(' ')));
         // Making label list.
         const labelList = {};
         for (let i = 0; i < result.length; ++i) {

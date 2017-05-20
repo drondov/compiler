@@ -50,6 +50,8 @@ export default class RPNExecuter {
         this.pauseVariable = a.text;
         this.pause = true;
         return;
+      case '@':
+        return -this.resolve(a);
     }
     throw new Error('Unknown operator');
   }
