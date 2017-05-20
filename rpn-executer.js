@@ -6,6 +6,7 @@ export default class RPNExecuter {
     this.stack = [];
     this.i = 0;
     this.tokens = data.tokens;
+    this.labelList = data.labelList;
     this.varTable = {};
     this.logs = [];
     this.pause = false;
@@ -36,20 +37,16 @@ export default class RPNExecuter {
   }
 
   resolveJump(token) {
-    for (let i = 0; i < this.tokens.length; ++i) {
-      if (this.tokens[i].lexem.type === 'LABEL' && this.tokens[i].labelIndex === token.labelIndex) {
-        // console.log('RESOLVED TO', this.tokens[i])
-        return i;
-      }
+    if (void 0 === this.labelList[token.labelIndex]) {
+      throw new Error(`LABEL WITH INDEX ${token.labelIndex} NOT FOUND`);
     }
-    throw new Error('LABEL NOT FOUND');
+    return this.labelList[token.labelIndex];
   }
 
   applyOperator1(operator, a) {
     switch(operator.text) {
       case 'write': return this.write(this.resolve(a));
       case 'read':
-        // this.varTable[a.text] = 10;
         this.pauseVariable = a.text;
         this.pause = true;
         return;
@@ -128,10 +125,10 @@ export default class RPNExecuter {
           this.i++;
           break;
         }
-        console.log('OPERATION', a, token);
+        debugLog('OPERATION', a, token);
         if (typeof result !== 'undefined') {
           this.stack.push(result);
-          console.log('result', result);
+          debugLog('result', result);
         }
         continue;
       }

@@ -1,23 +1,23 @@
 import _ from 'lodash';
 
 const precedenceTable = {
-    '*': 11,
-    '/': 11,
-    '+': 10,
-    '-': 10,
-    '>': 8,
-    '<': 8,
-    '=': 8,
-    '&': 7,
-    '|': 6,
-    ':=': 5,
-    'write': 5,
-    'read': 5,
-    '(': 4,
-    ';': 3,
-    '{': 2,
-    'if': 2,
-    'while': 2
+    '*': 9,
+    '/': 9,
+    '+': 8,
+    '-': 8,
+    '>': 7,
+    '<': 7,
+    '=': 7,
+    '&': 6,
+    '|': 5,
+    ':=': 4,
+    'write': 4,
+    'read': 4,
+    '(': 3,
+    ';': 2,
+    '{': 1,
+    'if': 1,
+    'while': 1
 };
 
 function getPrecedence(token) {
@@ -74,8 +74,15 @@ export default class RPNGenerator {
 
         const stack = [];
         const result = [];
+        const steps = [];
         for (let i = 0; i < tokens.length; ++i) {
             const token = tokens[i];
+            
+            steps.push({
+                token: _.cloneDeep(token),
+                stack: _.cloneDeep(stack),
+                rpn: _.cloneDeep(result),
+            });
 
             if (token.lexem.type === 'NUMBER' || token.lexem.type === 'ID') {
                 result.push(token);
@@ -145,10 +152,31 @@ export default class RPNGenerator {
 
             continue;
 
-            throw new Error('Undefined token.');
+            // throw new Error('Undefined token.');
         }
         // pop all elements into `result`.
         result.push(...stack.reverse());
-        return result;
+
+        steps.push({
+            stack: _.cloneDeep(stack),
+            rpn: _.cloneDeep(result),
+        });
+
+        // console.log(_.cloneDeep(result.map(x => x.text).join(' ')));
+        // Making label list.
+        const labelList = {};
+        for (let i = 0; i < result.length; ++i) {
+            const token = result[i];
+            if (token.lexem.type === 'LABEL') {
+                labelList[token.labelIndex] = i;
+                result.splice(i, 1);
+            }
+        }
+
+        return {
+            rpn: result,
+            steps,
+            labelList,
+        };
     }
 }

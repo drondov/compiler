@@ -22,11 +22,12 @@ export default class Console extends React.Component {
 
 	run() {
 		const rpnGenerator = new RPNGenerator();
-		const rpn = rpnGenerator.generate(this.state.lexerData);
+		const { rpn, labelList } = rpnGenerator.generate(this.state.lexerData);
 		console.log('rpn', rpn);
 		console.log('rpn', rpn.map(token => token.text).join(' '));
         const executer = new RPNExecuter({
             tokens: rpn,
+			labelList,
         });
 		executer.execute();
 		this.setState({
