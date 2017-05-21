@@ -35,13 +35,13 @@ program sumProgression {
 	sum := 0;
 	i := max;
 	while i > 0 do
-		sum := sum + i;
-		i := i - 1;
-		if i < 10 then
+		if i < 3 then
 			write(i * i);
 		else
 			write(-i * i);
 		endif;
+		sum := sum + i;
+		i := i - 1;
 	done;
 	write(sum);
 }
@@ -83,12 +83,12 @@ export default class App extends React.Component {
 			const syntaxAnalyser = new SyntaxAnalyser(this.lexerData.tokens);
 			syntaxAnalyser.analyze();
 
-			// const rpnGenerator = new RPNGenerator();
-			// const rpnGeneratorResult = rpnGenerator.generate(this.lexerData);
-			// rpnSteps = rpnGeneratorResult.steps;
-			// labelList = rpnGeneratorResult.labelList;
-			// rpn = rpnGeneratorResult.rpn;
-			// console.log('steps', rpnSteps);
+			const rpnGenerator = new RPNGenerator();
+			const rpnGeneratorResult = rpnGenerator.generate(this.lexerData);
+			rpnSteps = rpnGeneratorResult.steps;
+			labelList = rpnGeneratorResult.labelList;
+			rpn = rpnGeneratorResult.rpn;
+			console.log('steps', rpnSteps);
 
 		} catch (e) {
 			this.lexerData.error = e.message;

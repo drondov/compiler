@@ -16,9 +16,11 @@ const precedenceTable = {
     'read': 4,
     '(': 3,
     ';': 2,
-    '{': 1,
+    'do': 1,
+    'then': 1,
     'if': 1,
-    'while': 1
+    'while': 1,
+    'else': 1,
 };
 
 function getPrecedence(token) {
@@ -97,16 +99,18 @@ export default class RPNGenerator {
 
             if (token.text === 'while') {
                 stack.push(token);
+                // later need's to add label to jump on 'done'
                 const label = this.createLabel();
                 this.labelStack.push(label);
                 result.push(label);
                 continue;
             }
 
-            if (token.text === '{') {
+            if (token.text === 'do' || token.text === 'then') {
                 while (top(stack).text !== 'if' && top(stack).text !== 'while') {
                     result.push(stack.pop());
                 }
+                stack.pop(); // remove `if` and `while` statements.
                 stack.push(token);
                 const label = this.createLabel();
                 this.labelStack.push(label);
@@ -114,21 +118,34 @@ export default class RPNGenerator {
                 continue;
             }
 
-            if (token.text === '}') {
-                while (top(stack).text !== '{') {
+            if (token.text === 'done' || token.text === 'else' || token.text === 'endif') {
+                while (top(stack).text !== 'do' && top(stack).text !== 'then' && top(stack).text !== 'else') {
                     result.push(stack.pop());
                 }
-                stack.pop(); // pop left bracket.
-
-                const jneLabel = this.labelStack.pop()
 
                 const keywordToken = stack.pop();
-                if (keywordToken.text === 'while') {
+                if (keywordToken.text === 'do') {
+                    const jneLabel = this.labelStack.pop();
                     const jmp = this.createJump('JMP', this.labelStack.pop());
-
                     result.push(jmp);
+                    result.push(jneLabel);
                 }
-                result.push(jneLabel);
+
+                if (keywordToken.text === 'then') {
+                    const jneLabel = this.labelStack.pop();
+                    
+                    const label = this.createLabel(); // put it just after endif;
+                    this.labelStack.push(label);
+                    const jmp = this.createJump('JMP', label);
+                    result.push(jmp);
+
+                    result.push(jneLabel);
+                    stack.push(token);
+                }
+
+                if (keywordToken.text === 'else') {
+                    result.push(this.labelStack.pop());
+                }
 
                 continue;
             }
@@ -167,6 +184,8 @@ export default class RPNGenerator {
             stack: _.cloneDeep(stack),
             rpn: _.cloneDeep(result),
         });
+
+        console.log('rpn', result.map(token => token.text).join(' '));
 
         // Making label list.
         const labelList = {};
